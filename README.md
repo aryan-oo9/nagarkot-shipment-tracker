@@ -8,10 +8,8 @@ The system allows freight forwarders, cargo dispatchers, and operations staff to
 
 ## Live Deployment
 
-- **Frontend Application (Vercel):** `PENDING_DEPLOYMENT`
-- **Backend REST API (Render):** `PENDING_DEPLOYMENT`
-
-*(Deployment URLs will be updated once hosted service provisioning is completed).*
+- **Frontend Application (Vercel):** [https://nagarkot-shipment-tracker.vercel.app/](https://nagarkot-shipment-tracker.vercel.app/)
+- **Backend API Health Check (Render):** [https://nagarkot-shipment-api.onrender.com/api/health](https://nagarkot-shipment-api.onrender.com/api/health)
 
 ---
 
