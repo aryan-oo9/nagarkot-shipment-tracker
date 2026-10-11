@@ -17,7 +17,7 @@ The system allows freight forwarders, cargo dispatchers, and operations staff to
 
 - **Consignment Registration:** Create new shipments with unique reference numbers, origin, destination, expected delivery date, initial status, and explicit **Domestic** vs. **International** classification.
 - **Searchable Inventory:** Filter consignments by operational status (`Booked`, `In Transit`, `Customs Hold`, `Delivered`), search by reference number (case-insensitive substring matching), and navigate results using server-side pagination.
-- **Operations Overview Dashboard:** High-level dashboard featuring four summary KPI cards (**This month**, **This year**, **Domestic**, **International**), an interactive 75:25 layout with the latest 5 updated records, and a native SVG status distribution donut chart with accessible text summaries.
+- **Operations Overview Dashboard:** High-level dashboard featuring four summary KPI cards (**This month**, **This year**, **Domestic**, **International**), an interactive layout with the latest 5 updated records, and a native SVG status distribution donut chart with accessible text summaries.
 - **Consignment Detail View:** Comprehensive shipment overview displaying routes, dates, classification badges, and a one-click copy-to-clipboard action for reference numbers.
 - **Status Update Management:** Update shipment status with optional operational notes (up to 1,000 characters) with feedback for successful transitions or unchanged status submissions.
 - **Chronological Audit History:** Append-only timeline capturing every status change, exact timestamp, and operator notes, preserving an immutable historical trail.
