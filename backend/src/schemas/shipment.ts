@@ -1,5 +1,5 @@
 import { z } from 'zod';
-import { ALLOWED_STATUSES } from '../types/shipment';
+import { ALLOWED_SHIPMENT_TYPES, ALLOWED_STATUSES } from '../types/shipment';
 
 // Helper: strictly validate real calendar dates in YYYY-MM-DD format
 function isValidCalendarDate(val: string): boolean {
@@ -31,6 +31,11 @@ export const createShipmentSchema = z.object({
     .min(1, 'referenceNumber cannot be empty')
     .max(64, 'referenceNumber cannot exceed 64 characters')
     .transform((val) => val.toUpperCase()), // Normalize to uppercase
+  shipmentType: z.enum(ALLOWED_SHIPMENT_TYPES, {
+    errorMap: () => ({
+      message: `shipmentType must be one of: ${ALLOWED_SHIPMENT_TYPES.join(', ')}`,
+    }),
+  }),
   origin: z
     .string({ required_error: 'origin is required' })
     .trim()

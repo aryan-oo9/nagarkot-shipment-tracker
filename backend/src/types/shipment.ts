@@ -7,9 +7,13 @@ export const ALLOWED_STATUSES = [
 
 export type ShipmentStatus = (typeof ALLOWED_STATUSES)[number];
 
+export const ALLOWED_SHIPMENT_TYPES = ['Domestic', 'International'] as const;
+export type ShipmentType = (typeof ALLOWED_SHIPMENT_TYPES)[number];
+
 export interface ShipmentRecord {
   id: number;
   reference_number: string;
+  shipment_type: ShipmentType;
   origin: string;
   destination: string;
   current_status: ShipmentStatus;
@@ -28,10 +32,25 @@ export interface ShipmentHistoryRecord {
 
 export interface CreateShipmentInput {
   referenceNumber: string;
+  shipmentType: ShipmentType;
   origin: string;
   destination: string;
   currentStatus: ShipmentStatus;
   expectedDeliveryDate: string;
+}
+
+export interface DashboardSummary {
+  thisMonth: number;
+  thisYear: number;
+  domestic: number;
+  international: number;
+  statusCounts: {
+    booked: number;
+    inTransit: number;
+    customsHold: number;
+    delivered: number;
+  };
+  recentShipments: ShipmentRecord[];
 }
 
 export interface UpdateStatusInput {

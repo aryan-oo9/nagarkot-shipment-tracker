@@ -1,6 +1,7 @@
 import React from 'react';
-import { Routes, Route, Navigate } from 'react-router-dom';
+import { Routes, Route } from 'react-router-dom';
 import { AppShell } from './components/layout/AppShell';
+import { OverviewPage } from './pages/OverviewPage';
 import { DashboardPage } from './pages/DashboardPage';
 import { CreateShipmentPage } from './pages/CreateShipmentPage';
 import { ShipmentDetailPage } from './pages/ShipmentDetailPage';
@@ -10,8 +11,8 @@ export const App: React.FC = () => {
   return (
     <Routes>
       <Route path="/" element={<AppShell />}>
-        {/* Default redirect to shipments dashboard */}
-        <Route index element={<Navigate to="/shipments" replace />} />
+        {/* Operational Overview Dashboard */}
+        <Route index element={<OverviewPage />} />
         
         {/* Core operational routes */}
         <Route path="shipments" element={<DashboardPage />} />

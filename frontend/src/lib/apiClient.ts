@@ -8,6 +8,7 @@ import {
 } from '../types/api';
 import {
   CreateShipmentFormData,
+  DashboardSummary,
   Shipment,
   ShipmentFilterParams,
   UpdateStatusFormData,
@@ -193,5 +194,9 @@ export const apiClient = {
     signal?: AbortSignal
   ): Promise<ShipmentHistoryResponse> {
     return this.get<ShipmentHistoryResponse>(`/shipments/${id}/history`, { signal });
+  },
+
+  getDashboardSummary(signal?: AbortSignal): Promise<{ data: DashboardSummary }> {
+    return this.get<{ data: DashboardSummary }>('/shipments/summary', { signal });
   },
 };

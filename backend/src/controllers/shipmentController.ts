@@ -70,6 +70,17 @@ export class ShipmentController {
       next(err);
     }
   }
+
+  async getSummary(req: Request, res: Response, next: NextFunction): Promise<void> {
+    try {
+      const summary = await shipmentService.getDashboardSummary();
+      res.status(200).json({
+        data: summary,
+      });
+    } catch (err) {
+      next(err);
+    }
+  }
 }
 
 export const shipmentController = new ShipmentController();

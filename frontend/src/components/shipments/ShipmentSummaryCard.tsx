@@ -14,9 +14,22 @@ export const ShipmentSummaryCard: React.FC<ShipmentSummaryCardProps> = ({ shipme
         <h2 className="text-base font-semibold text-ink-primary">
           Consignment Overview
         </h2>
-        <span className="text-xs text-ink-muted">
-          Record ID #{shipment.id}
-        </span>
+        <div className="flex items-center gap-2">
+          {shipment.shipment_type && (
+            <span
+              className={`inline-flex items-center px-2 py-0.5 rounded text-xs font-medium tracking-wide uppercase ${
+                shipment.shipment_type === 'International'
+                  ? 'bg-amber-50 text-amber-800 border border-amber-200/60'
+                  : 'bg-purple-50 text-purple-800 border border-purple-200/60'
+              }`}
+            >
+              {shipment.shipment_type}
+            </span>
+          )}
+          <span className="text-xs text-ink-muted">
+            Record ID #{shipment.id}
+          </span>
+        </div>
       </div>
 
       {/* Grid of Key Details */}

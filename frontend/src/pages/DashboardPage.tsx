@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useRef, useCallback } from 'react';
 import { Link, useSearchParams } from 'react-router-dom';
-import { Plus, RefreshCw, AlertCircle } from 'lucide-react';
+import { Plus, RefreshCw, AlertCircle, History } from 'lucide-react';
 import { Shipment, ShipmentStatus } from '../types/shipment';
 import { PaginationMeta } from '../types/api';
 import { apiClient } from '../lib/apiClient';
@@ -157,6 +157,7 @@ export const DashboardPage: React.FC = () => {
     updateQueryParams({ offset: newOffset });
   };
 
+  const isHistoryView = searchParams.get('view') === 'history';
   const isFilterActive = Boolean(currentSearch || currentStatus);
 
   return (
@@ -171,18 +172,48 @@ export const DashboardPage: React.FC = () => {
             Track, search and manage consignment records.
           </p>
         </div>
-        <div>
-          <Link to="/shipments/new">
-            <Button
-              variant="primary"
-              leftIcon={<Plus className="w-4 h-4" />}
-              aria-label="Create new shipment"
-            >
-              New shipment
-            </Button>
-          </Link>
-        </div>
+        {!isHistoryView && (
+          <div>
+            <Link to="/shipments/new">
+              <Button
+                variant="primary"
+                leftIcon={<Plus className="w-4 h-4" />}
+                aria-label="Create new shipment"
+              >
+                New shipment
+              </Button>
+            </Link>
+          </div>
+        )}
       </div>
+
+      {/* History Guidance Banner when navigating via Sidebar History */}
+      {isHistoryView && (
+        <div
+          role="status"
+          aria-live="polite"
+          className="rounded-lg border border-brand-200 bg-brand-50 p-4 flex flex-col sm:flex-row sm:items-center justify-between gap-3 text-xs sm:text-sm text-brand-900 shadow-xs"
+        >
+          <div className="flex items-center gap-2.5">
+            <History className="w-4 h-4 text-brand-700 shrink-0" aria-hidden="true" />
+            <span>
+              <strong>Shipment History:</strong> Select any shipment below to inspect its chronological status transitions and operational notes.
+            </span>
+          </div>
+          <button
+            type="button"
+            onClick={() => {
+              const next = new URLSearchParams(searchParams);
+              next.delete('view');
+              setSearchParams(next);
+            }}
+            className="text-xs font-semibold text-brand-700 hover:text-brand-900 underline underline-offset-2 shrink-0 cursor-pointer self-end sm:self-auto"
+            aria-label="Dismiss history guidance"
+          >
+            Dismiss
+          </button>
+        </div>
+      )}
 
       {/* Search and Status Filter Bar */}
       <SearchFilterBar

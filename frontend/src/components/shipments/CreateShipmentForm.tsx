@@ -1,6 +1,12 @@
 import React, { useState } from 'react';
 import { Link } from 'react-router-dom';
-import { ALLOWED_STATUSES, CreateShipmentFormData, ShipmentStatus } from '../../types/shipment';
+import {
+  ALLOWED_SHIPMENT_TYPES,
+  ALLOWED_STATUSES,
+  CreateShipmentFormData,
+  ShipmentStatus,
+  ShipmentType,
+} from '../../types/shipment';
 import { isValidCalendarDate, normalizeReferenceNumber } from '../../lib/formatters';
 import { Button } from '../common/Button';
 import { Alert } from '../common/Alert';
@@ -22,6 +28,7 @@ export const CreateShipmentForm: React.FC<CreateShipmentFormProps> = ({
 }) => {
   // Form input states
   const [referenceNumber, setReferenceNumber] = useState('');
+  const [shipmentType, setShipmentType] = useState<ShipmentType | ''>('');
   const [origin, setOrigin] = useState('');
   const [destination, setDestination] = useState('');
   const [expectedDeliveryDate, setExpectedDeliveryDate] = useState('');
@@ -47,6 +54,13 @@ export const CreateShipmentForm: React.FC<CreateShipmentFormProps> = ({
         const trimmed = value.trim();
         if (!trimmed) return 'Reference number is required';
         if (trimmed.length > 64) return 'Reference number cannot exceed 64 characters';
+        return '';
+      }
+      case 'shipmentType': {
+        if (!value) return 'Shipment type is required';
+        if (value !== 'Domestic' && value !== 'International') {
+          return 'Shipment type must be Domestic or International';
+        }
         return '';
       }
       case 'origin': {
@@ -94,6 +108,7 @@ export const CreateShipmentForm: React.FC<CreateShipmentFormProps> = ({
     // Mark all fields as touched
     setTouched({
       referenceNumber: true,
+      shipmentType: true,
       origin: true,
       destination: true,
       expectedDeliveryDate: true,
@@ -101,12 +116,14 @@ export const CreateShipmentForm: React.FC<CreateShipmentFormProps> = ({
     });
 
     const refError = validateField('referenceNumber', referenceNumber);
+    const typeError = validateField('shipmentType', shipmentType);
     const originError = validateField('origin', origin);
     const destError = validateField('destination', destination);
     const dateError = validateField('expectedDeliveryDate', expectedDeliveryDate);
 
     const validationErrors: Record<string, string> = {};
     if (refError) validationErrors.referenceNumber = refError;
+    if (typeError) validationErrors.shipmentType = typeError;
     if (originError) validationErrors.origin = originError;
     if (destError) validationErrors.destination = destError;
     if (dateError) validationErrors.expectedDeliveryDate = dateError;
@@ -123,6 +140,7 @@ export const CreateShipmentForm: React.FC<CreateShipmentFormProps> = ({
 
     const payload: CreateShipmentFormData = {
       referenceNumber: normalizeReferenceNumber(referenceNumber),
+      shipmentType: shipmentType as ShipmentType,
       origin: origin.trim(),
       destination: destination.trim(),
       expectedDeliveryDate: expectedDeliveryDate.trim(),
@@ -153,58 +171,113 @@ export const CreateShipmentForm: React.FC<CreateShipmentFormProps> = ({
         </Alert>
       )}
 
-      {/* 1. Reference Number */}
-      <div className="space-y-1.5">
-        <label htmlFor="referenceNumber" className="block text-sm font-medium text-ink-primary">
-          Reference Number <span className="text-status-danger-text">*</span>
-        </label>
-        <input
-          id="referenceNumber"
-          name="referenceNumber"
-          type="text"
-          value={referenceNumber}
-          onChange={(e) => {
-            setReferenceNumber(e.target.value);
-            if (clientErrors.referenceNumber) {
-              setClientErrors((prev) => {
-                const next = { ...prev };
-                delete next.referenceNumber;
-                return next;
-              });
-            }
-          }}
-          onBlur={(e) => handleBlur('referenceNumber', e.target.value)}
-          placeholder="e.g. NGK-1004"
-          maxLength={64}
-          autoComplete="off"
-          spellCheck="false"
-          aria-required="true"
-          aria-invalid={hasError('referenceNumber')}
-          aria-describedby={
-            hasError('referenceNumber')
-              ? 'referenceNumber-error'
-              : 'referenceNumber-hint'
-          }
-          className={`
-            w-full px-3.5 py-2.5 text-sm font-mono bg-surface text-ink-primary rounded-md border
-            focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-700 transition-colors
-            ${
+      {/* 1. Consignment Details: Reference Number & Shipment Type */}
+      <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+        {/* Reference Number */}
+        <div className="space-y-1.5">
+          <label htmlFor="referenceNumber" className="block text-sm font-medium text-ink-primary">
+            Reference Number <span className="text-status-danger-text">*</span>
+          </label>
+          <input
+            id="referenceNumber"
+            name="referenceNumber"
+            type="text"
+            value={referenceNumber}
+            onChange={(e) => {
+              setReferenceNumber(e.target.value);
+              if (clientErrors.referenceNumber) {
+                setClientErrors((prev) => {
+                  const next = { ...prev };
+                  delete next.referenceNumber;
+                  return next;
+                });
+              }
+            }}
+            onBlur={(e) => handleBlur('referenceNumber', e.target.value)}
+            placeholder="e.g. NGK-1004"
+            maxLength={64}
+            autoComplete="off"
+            spellCheck="false"
+            aria-required="true"
+            aria-invalid={hasError('referenceNumber')}
+            aria-describedby={
               hasError('referenceNumber')
-                ? 'border-status-danger-border ring-1 ring-status-danger-border'
-                : 'border-border-input focus:border-brand-700'
+                ? 'referenceNumber-error'
+                : 'referenceNumber-hint'
             }
-          `}
-        />
-        <div className="flex items-center justify-between text-xs">
-          <span id="referenceNumber-hint" className="text-ink-muted">
-            Unique shipment identifier (will be saved in uppercase).
-          </span>
+            className={`
+              w-full px-3.5 py-2.5 text-sm font-mono bg-surface text-ink-primary rounded-md border
+              focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-700 transition-colors
+              ${
+                hasError('referenceNumber')
+                  ? 'border-status-danger-border ring-1 ring-status-danger-border'
+                  : 'border-border-input focus:border-brand-700'
+              }
+            `}
+          />
+          <div className="flex items-center justify-between text-xs">
+            <span id="referenceNumber-hint" className="text-ink-muted">
+              Unique shipment identifier (saved in uppercase).
+            </span>
+          </div>
+          {hasError('referenceNumber') && (
+            <p id="referenceNumber-error" role="alert" className="text-xs text-status-danger-text font-medium mt-1">
+              {getErrorMessage('referenceNumber')}
+            </p>
+          )}
         </div>
-        {hasError('referenceNumber') && (
-          <p id="referenceNumber-error" role="alert" className="text-xs text-status-danger-text font-medium mt-1">
-            {getErrorMessage('referenceNumber')}
-          </p>
-        )}
+
+        {/* Shipment Type */}
+        <div className="space-y-1.5">
+          <label htmlFor="shipmentType" className="block text-sm font-medium text-ink-primary">
+            Shipment Type <span className="text-status-danger-text">*</span>
+          </label>
+          <select
+            id="shipmentType"
+            name="shipmentType"
+            value={shipmentType}
+            onChange={(e) => {
+              setShipmentType(e.target.value as ShipmentType);
+              if (clientErrors.shipmentType) {
+                setClientErrors((prev) => {
+                  const next = { ...prev };
+                  delete next.shipmentType;
+                  return next;
+                });
+              }
+            }}
+            onBlur={(e) => handleBlur('shipmentType', e.target.value)}
+            aria-required="true"
+            aria-invalid={hasError('shipmentType')}
+            aria-describedby={hasError('shipmentType') ? 'shipmentType-error' : 'shipmentType-hint'}
+            className={`
+              w-full px-3.5 py-2.5 text-sm bg-surface text-ink-primary rounded-md border
+              focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-700 transition-colors cursor-pointer
+              ${
+                hasError('shipmentType')
+                  ? 'border-status-danger-border ring-1 ring-status-danger-border'
+                  : 'border-border-input focus:border-brand-700'
+              }
+            `}
+          >
+            <option value="">Select shipment type...</option>
+            {ALLOWED_SHIPMENT_TYPES.map((type) => (
+              <option key={type} value={type}>
+                {type}
+              </option>
+            ))}
+          </select>
+          <div className="flex items-center justify-between text-xs">
+            <span id="shipmentType-hint" className="text-ink-muted">
+              Routing classification (Domestic or International).
+            </span>
+          </div>
+          {hasError('shipmentType') && (
+            <p id="shipmentType-error" role="alert" className="text-xs text-status-danger-text font-medium mt-1">
+              {getErrorMessage('shipmentType')}
+            </p>
+          )}
+        </div>
       </div>
 
       {/* 2. Route: Origin & Destination */}

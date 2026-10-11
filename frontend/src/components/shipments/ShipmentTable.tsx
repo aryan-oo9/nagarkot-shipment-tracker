@@ -39,15 +39,28 @@ export const ShipmentTable: React.FC<ShipmentTableProps> = ({ shipments }) => {
               key={shipment.id}
               className="hover:bg-brand-50/40 transition-colors group"
             >
-              {/* Reference Number */}
+              {/* Reference Number & Type */}
               <td className="py-4 pl-4 sm:pl-6 pr-4 whitespace-nowrap">
-                <Link
-                  to={`/shipments/${shipment.id}`}
-                  className="font-mono font-semibold text-brand-700 hover:text-brand-900 group-hover:underline focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-700 rounded px-1 -mx-1"
-                  aria-label={`View shipment ${shipment.reference_number}`}
-                >
-                  {shipment.reference_number}
-                </Link>
+                <div className="flex items-center gap-2">
+                  <Link
+                    to={`/shipments/${shipment.id}`}
+                    className="font-mono font-semibold text-brand-700 hover:text-brand-900 group-hover:underline focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-700 rounded px-1 -mx-1"
+                    aria-label={`View shipment ${shipment.reference_number}`}
+                  >
+                    {shipment.reference_number}
+                  </Link>
+                  {shipment.shipment_type && (
+                    <span
+                      className={`inline-flex items-center px-1.5 py-0.5 rounded text-[10px] font-medium tracking-wide uppercase ${
+                        shipment.shipment_type === 'International'
+                          ? 'bg-amber-50 text-amber-800 border border-amber-200/60'
+                          : 'bg-purple-50 text-purple-800 border border-purple-200/60'
+                      }`}
+                    >
+                      {shipment.shipment_type}
+                    </span>
+                  )}
+                </div>
               </td>
 
               {/* Route */}

@@ -2,6 +2,7 @@ import { PoolClient } from 'pg';
 import { getClient, query } from '../db/pool';
 import {
   CreateShipmentInput,
+  DashboardSummary,
   PaginatedResult,
   QueryShipmentsInput,
   ShipmentHistoryRecord,
@@ -12,14 +13,16 @@ import { ConflictError, NotFoundError } from '../utils/errors';
 
 export class ShipmentService {
   /**
-   * Create a new shipment and record initial status history within an atomic transaction.
+   * Creates a new consignment and writes its initial status log.
+   * Both operations execute within an atomic PostgreSQL transaction (BEGIN...COMMIT/ROLLBACK)
+   * to guarantee that a shipment cannot exist without its corresponding audit record.
    */
   async createShipment(input: CreateShipmentInput): Promise<ShipmentRecord> {
     const client: PoolClient = await getClient();
     try {
       await client.query('BEGIN');
 
-      // Check for existing reference number
+      // Enforce reference number uniqueness prior to insert
       const checkRes = await client.query(
         'SELECT 1 FROM shipments WHERE reference_number = $1',
         [input.referenceNumber]
@@ -33,11 +36,12 @@ export class ShipmentService {
       // Insert shipment record
       const insertShipmentSql = `
         INSERT INTO shipments (
-          reference_number, origin, destination, current_status, expected_delivery_date
-        ) VALUES ($1, $2, $3, $4, $5)
+          reference_number, shipment_type, origin, destination, current_status, expected_delivery_date
+        ) VALUES ($1, $2, $3, $4, $5, $6)
         RETURNING
           id,
           reference_number,
+          shipment_type,
           origin,
           destination,
           current_status,
@@ -47,6 +51,7 @@ export class ShipmentService {
       `;
       const shipmentRes = await client.query<ShipmentRecord>(insertShipmentSql, [
         input.referenceNumber,
+        input.shipmentType,
         input.origin,
         input.destination,
         input.currentStatus,
@@ -117,6 +122,7 @@ export class ShipmentService {
       SELECT
         id,
         reference_number,
+        shipment_type,
         origin,
         destination,
         current_status,
@@ -150,6 +156,7 @@ export class ShipmentService {
       SELECT
         id,
         reference_number,
+        shipment_type,
         origin,
         destination,
         current_status,
@@ -182,6 +189,7 @@ export class ShipmentService {
         SELECT
           id,
           reference_number,
+          shipment_type,
           origin,
           destination,
           current_status,
@@ -217,6 +225,7 @@ export class ShipmentService {
         RETURNING
           id,
           reference_number,
+          shipment_type,
           origin,
           destination,
           current_status,
@@ -279,6 +288,79 @@ export class ShipmentService {
     `;
     const historyRes = await query<ShipmentHistoryRecord>(historySql, [id]);
     return historyRes.rows;
+  }
+
+  /**
+   * Aggregates real database-derived operational summary metrics and recent 5 shipments.
+   * Utilizes PostgreSQL conditional aggregation in a single query to compute calendar boundaries
+   * (UTC truncated month and year), classification counts, and status distribution without
+   * loading raw shipment records into memory.
+   */
+  async getDashboardSummary(): Promise<DashboardSummary> {
+    const summarySql = `
+      SELECT
+        COUNT(*) FILTER (WHERE created_at >= date_trunc('month', CURRENT_TIMESTAMP AT TIME ZONE 'UTC') AT TIME ZONE 'UTC')::int AS "thisMonth",
+        COUNT(*) FILTER (WHERE created_at >= date_trunc('year', CURRENT_TIMESTAMP AT TIME ZONE 'UTC') AT TIME ZONE 'UTC')::int AS "thisYear",
+        COUNT(*) FILTER (WHERE shipment_type = 'Domestic')::int AS "domestic",
+        COUNT(*) FILTER (WHERE shipment_type = 'International')::int AS "international",
+        COUNT(*) FILTER (WHERE current_status = 'Booked')::int AS "booked",
+        COUNT(*) FILTER (WHERE current_status = 'In Transit')::int AS "inTransit",
+        COUNT(*) FILTER (WHERE current_status = 'Customs Hold')::int AS "customsHold",
+        COUNT(*) FILTER (WHERE current_status = 'Delivered')::int AS "delivered"
+      FROM shipments
+    `;
+    const summaryRes = await query<{
+      thisMonth: number;
+      thisYear: number;
+      domestic: number;
+      international: number;
+      booked: number;
+      inTransit: number;
+      customsHold: number;
+      delivered: number;
+    }>(summarySql);
+
+    const row = summaryRes.rows[0] || {
+      thisMonth: 0,
+      thisYear: 0,
+      domestic: 0,
+      international: 0,
+      booked: 0,
+      inTransit: 0,
+      customsHold: 0,
+      delivered: 0,
+    };
+
+    const recentSql = `
+      SELECT
+        id,
+        reference_number,
+        shipment_type,
+        origin,
+        destination,
+        current_status,
+        to_char(expected_delivery_date, 'YYYY-MM-DD') AS expected_delivery_date,
+        created_at,
+        updated_at
+      FROM shipments
+      ORDER BY updated_at DESC, created_at DESC, id DESC
+      LIMIT 5
+    `;
+    const recentRes = await query<ShipmentRecord>(recentSql);
+
+    return {
+      thisMonth: row.thisMonth ?? 0,
+      thisYear: row.thisYear ?? 0,
+      domestic: row.domestic ?? 0,
+      international: row.international ?? 0,
+      statusCounts: {
+        booked: row.booked ?? 0,
+        inTransit: row.inTransit ?? 0,
+        customsHold: row.customsHold ?? 0,
+        delivered: row.delivered ?? 0,
+      },
+      recentShipments: recentRes.rows ?? [],
+    };
   }
 }
 

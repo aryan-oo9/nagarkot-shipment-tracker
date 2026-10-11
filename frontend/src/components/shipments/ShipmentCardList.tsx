@@ -17,14 +17,27 @@ export const ShipmentCardList: React.FC<ShipmentCardListProps> = ({ shipments })
           key={shipment.id}
           className="bg-surface rounded-lg border border-border-subtle p-4 shadow-sm hover:border-brand-300 transition-colors"
         >
-          {/* Header: Reference + Status */}
+          {/* Header: Reference + Type + Status */}
           <div className="flex items-center justify-between gap-2 pb-3 border-b border-border-subtle">
-            <Link
-              to={`/shipments/${shipment.id}`}
-              className="font-mono font-bold text-base text-brand-700 hover:text-brand-900 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-700 rounded px-1 -mx-1"
-            >
-              {shipment.reference_number}
-            </Link>
+            <div className="flex items-center gap-2">
+              <Link
+                to={`/shipments/${shipment.id}`}
+                className="font-mono font-bold text-base text-brand-700 hover:text-brand-900 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-700 rounded px-1 -mx-1"
+              >
+                {shipment.reference_number}
+              </Link>
+              {shipment.shipment_type && (
+                <span
+                  className={`inline-flex items-center px-1.5 py-0.5 rounded text-[10px] font-medium tracking-wide uppercase ${
+                    shipment.shipment_type === 'International'
+                      ? 'bg-amber-50 text-amber-800 border border-amber-200/60'
+                      : 'bg-purple-50 text-purple-800 border border-purple-200/60'
+                  }`}
+                >
+                  {shipment.shipment_type}
+                </span>
+              )}
+            </div>
             <StatusBadge status={shipment.current_status} size="sm" />
           </div>
 

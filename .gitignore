@@ -48,3 +48,10 @@ Thumbs.db
 *.sublime-workspace
 *.sublime-project
 .agents/
+
+# Excluded from submission repository (preserved locally on disk)
+docs/
+frontend/src/test/
+backend/tests/
+backend/migrations/
+*.sql
