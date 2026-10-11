@@ -1,52 +1,93 @@
-import React from 'react';
-import { Link } from 'react-router-dom';
-import { ArrowLeft, PlusCircle } from 'lucide-react';
-import { Skeleton } from '../components/common/Skeleton';
+import React, { useState } from 'react';
+import { Link, useNavigate } from 'react-router-dom';
+import { ArrowLeft } from 'lucide-react';
+import { CreateShipmentFormData } from '../types/shipment';
+import { ApiError } from '../types/api';
+import { apiClient } from '../lib/apiClient';
+import { CreateShipmentForm } from '../components/shipments/CreateShipmentForm';
 
 export const CreateShipmentPage: React.FC = () => {
+  const navigate = useNavigate();
+  const [isSubmitting, setIsSubmitting] = useState<boolean>(false);
+  const [serverError, setServerError] = useState<string | null>(null);
+  const [serverFieldErrors, setServerFieldErrors] = useState<Record<string, string>>({});
+
+  const handleCreateShipment = async (formData: CreateShipmentFormData) => {
+    setIsSubmitting(true);
+    setServerError(null);
+    setServerFieldErrors({});
+
+    try {
+      const response = await apiClient.createShipment(formData);
+      // On success, redirect directly to the newly created shipment details
+      if (response.data && response.data.id) {
+        navigate(`/shipments/${response.data.id}`, {
+          state: { flashMessage: 'Shipment created successfully.' },
+        });
+      } else {
+        navigate('/shipments');
+      }
+    } catch (err: unknown) {
+      if (err instanceof ApiError) {
+        if (err.status === 409 || err.code === 'CONFLICT') {
+          setServerFieldErrors({
+            referenceNumber:
+              'This reference number is already in use. Enter a different reference number.',
+          });
+          setServerError(
+            'This reference number is already in use. Enter a different reference number.'
+          );
+        } else if (err.status === 400 && Object.keys(err.fieldErrors).length > 0) {
+          setServerFieldErrors(err.fieldErrors);
+          setServerError('Invalid submission. Please review highlighted field errors.');
+        } else {
+          setServerError(
+            err.message ||
+              "We couldn't create the shipment. Your entries are still here—please try again."
+          );
+        }
+      } else {
+        setServerError(
+          "We couldn't connect to the server. Your entries are preserved—please try again."
+        );
+      }
+    } finally {
+      setIsSubmitting(false);
+    }
+  };
+
   return (
     <div className="max-w-2xl mx-auto space-y-6">
       {/* Breadcrumb back to Dashboard */}
       <div>
         <Link
           to="/shipments"
-          className="inline-flex items-center gap-1.5 text-xs sm:text-sm font-medium text-brand-700 hover:text-brand-900 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-700 rounded p-0.5"
+          className="inline-flex items-center gap-1.5 text-xs sm:text-sm font-medium text-brand-700 hover:text-brand-900 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-700 rounded p-0.5 transition-colors"
+          aria-label="Return to shipments dashboard"
         >
-          <ArrowLeft className="w-4 h-4" />
-          <span>Back to Shipments</span>
+          <ArrowLeft className="w-4 h-4" aria-hidden="true" />
+          <span>Shipments / New shipment</span>
         </Link>
       </div>
 
       {/* Header */}
       <div>
         <h1 className="text-xl sm:text-2xl font-bold text-ink-primary tracking-tight">
-          Create New Shipment
+          Create shipment
         </h1>
         <p className="text-sm text-ink-secondary mt-1">
-          Register a new consignment with route and delivery schedule.
+          Enter the shipment details to register a new record.
         </p>
       </div>
 
-      {/* Placeholder card */}
-      <div className="bg-surface rounded-lg border border-border-subtle p-6 shadow-sm space-y-4">
-        <div className="flex items-center gap-3 pb-4 border-b border-border-subtle text-ink-secondary text-sm">
-          <PlusCircle className="w-5 h-5 text-brand-700" />
-          <span className="font-medium text-ink-primary">
-            Batch 3 Creation Form Placeholder
-          </span>
-        </div>
-        <p className="text-sm text-ink-secondary">
-          Form fields, Zod-compatible validation, uppercase normalization, and inline conflict handling will be implemented in Batch 3.
-        </p>
-        <div className="space-y-4 pt-2">
-          <Skeleton height={40} className="w-full" />
-          <div className="grid grid-cols-2 gap-4">
-            <Skeleton height={40} className="w-full" />
-            <Skeleton height={40} className="w-full" />
-          </div>
-          <Skeleton height={40} className="w-full" />
-        </div>
-      </div>
+      {/* Main Creation Form */}
+      <CreateShipmentForm
+        onSubmit={handleCreateShipment}
+        isSubmitting={isSubmitting}
+        serverError={serverError}
+        serverFieldErrors={serverFieldErrors}
+        onClearServerError={() => setServerError(null)}
+      />
     </div>
   );
 };

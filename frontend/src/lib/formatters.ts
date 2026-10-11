@@ -102,3 +102,27 @@ export function getStatusColorConfig(status: ShipmentStatus | string): {
       };
   }
 }
+
+/**
+ * Validate that a string is a real calendar date in YYYY-MM-DD format.
+ */
+export function isValidCalendarDate(val: string): boolean {
+  if (!/^\d{4}-\d{2}-\d{2}$/.test(val)) {
+    return false;
+  }
+  const [yearStr, monthStr, dayStr] = val.split('-');
+  const year = parseInt(yearStr, 10);
+  const month = parseInt(monthStr, 10);
+  const day = parseInt(dayStr, 10);
+
+  if (month < 1 || month > 12) {
+    return false;
+  }
+
+  const utcDate = new Date(Date.UTC(year, month - 1, day));
+  return (
+    utcDate.getUTCFullYear() === year &&
+    utcDate.getUTCMonth() === month - 1 &&
+    utcDate.getUTCDate() === day
+  );
+}

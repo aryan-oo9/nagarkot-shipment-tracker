@@ -3,6 +3,7 @@ import {
   formatCalendarDate,
   formatDateTime,
   getStatusColorConfig,
+  isValidCalendarDate,
   normalizeReferenceNumber,
 } from '../lib/formatters';
 
@@ -67,4 +68,24 @@ describe('Formatters', () => {
       expect(unknown.bg).toBe('bg-gray-100');
     });
   });
+
+  describe('isValidCalendarDate', () => {
+    it('accepts valid real calendar dates', () => {
+      expect(isValidCalendarDate('2026-10-15')).toBe(true);
+      expect(isValidCalendarDate('2024-02-29')).toBe(true); // Leap year
+      expect(isValidCalendarDate('2025-01-01')).toBe(true);
+      expect(isValidCalendarDate('2020-12-31')).toBe(true);
+    });
+
+    it('rejects invalid or impossible calendar dates', () => {
+      expect(isValidCalendarDate('2026-02-31')).toBe(false); // Feb 31 does not exist
+      expect(isValidCalendarDate('2025-02-29')).toBe(false); // Non-leap year Feb 29
+      expect(isValidCalendarDate('2026-04-31')).toBe(false); // April has 30 days
+      expect(isValidCalendarDate('2026-13-01')).toBe(false); // Month 13
+      expect(isValidCalendarDate('2026-00-10')).toBe(false); // Month 0
+      expect(isValidCalendarDate('not-a-date')).toBe(false);
+      expect(isValidCalendarDate('')).toBe(false);
+    });
+  });
 });
+
